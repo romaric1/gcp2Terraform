@@ -1,0 +1,32 @@
+#passer le dictionnaire à la template jinja
+#boucle qui parcourt les instances et qui remplie les variables
+#gérer les tags !!!
+{% for index in range(instances_infos|length) %}
+ 
+resource "google_compute_instance" "default{{index}}" {
+  name         = "{{instances_infos[index]['name']}}"
+  machine_type = "{{instances_infos[index]['machine_type']}}"
+  zone         = "{{instances_infos[index]['zone']}}"
+
+  tags = {{instances_infos[index]['tags']}}
+
+  boot_disk {
+    initialize_params {
+      image = "{{ instances_infos[index]['image']}}"
+    }
+  }
+
+  // Local SSD disk
+  scratch_disk {
+  }
+
+  network_interface {
+    network = "{{ instances_infos[index]['network']}}"
+
+    access_config {
+      nat_ip = "{{ instances_infos[index]['ip']}}"
+    }
+  }
+
+}
+{% endfor %}
