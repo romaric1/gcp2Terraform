@@ -1,18 +1,21 @@
 #passer le dictionnaire à la template jinja
 #boucle qui parcourt les instances et qui remplie les variables
 #gérer les tags !!!
+#virer le running itérer sur toutes les instances
+
 {% for index in range(instances_infos|length) %}
  
-resource "google_compute_instance" "default{{index}}" {
+resource "google_compute_instance" "{{instances_infos[index]['name']}}" {
   name         = "{{instances_infos[index]['name']}}"
   machine_type = "{{instances_infos[index]['machine_type']}}"
   zone         = "{{instances_infos[index]['zone']}}"
 
+{% if 'tags' in instances_infos[index] %}
   tags = {{instances_infos[index]['tags']}}
-
+{% endif %}
   boot_disk {
     initialize_params {
-      image = "{{ instances_infos[index]['image']}}"
+      image = "debian-cloud/{{ instances_infos[index]['image']}}"
     }
   }
 
