@@ -14,15 +14,18 @@ resource "google_compute_instance" "{{instances_infos[index]['name']}}" {
   tags = {{instances_infos[index]['tags']}}
 {% endif %}
   boot_disk {
+    device_name = "{{instances_infos[index]['device_name']}}"
     initialize_params {
-      image = "debian-cloud/{{ instances_infos[index]['image']}}"
+      image = "{{ instances_infos[index]['image']}}"
+      size = "{{instances_infos[index]['disk_size']}}"
     }
   }
-
-  // Local SSD disk
-  scratch_disk {
-  }
-
+{% if 'labels' in instances_infos[index] %}
+labels {
+{% for key in instances_infos[index]['labels']  %}
+   {{key}} = "{{instances_infos[index]['labels'][key]}}"{% endfor %}
+}
+{% endif %}
   network_interface {
     network = "{{ instances_infos[index]['network']}}"
 
@@ -31,5 +34,9 @@ resource "google_compute_instance" "{{instances_infos[index]['name']}}" {
     }
   }
 
+service_account {
+  email = "{{ instances_infos[index]['service_account_email'] }}"
+  scopes = {{ instances_infos[index]['scopes'] }}
+}
 }
 {% endfor %}

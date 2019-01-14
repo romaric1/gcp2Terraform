@@ -14,34 +14,56 @@ import json
 # step 1 faire une instance simple et la relancer avec terraform 
 # step 2 complexifier l'instance
 
-# atttention plusieurs interfaces pour netwooooooooork !
+
+#2labels + service accounts + gérer plusieurs disk
+#metadata_startup_script + metadata
+
+#3atttention plusieurs interfaces pour netwooooooooork !
+#4 COMPARER LES INSTANCES
 
 
 def authentification():
   return googleapiclient.discovery.build('compute', 'v1')
 
 # [START list_instances]
-def list_instances(compute, project, zone , instance_status):
-  result = compute.instances().list(project=project, zone=zone , filter ='status eq '+ instance_status).execute()
-  print(result)
-  return result['items'] if 'items' in result else None
+#def list_instances(compute, project, zone , instance_status):
+def list_instances(compute, project,instance_status):
+  #result = compute.instances().list(project=project, zone=zone , filter ='status eq '+ instance_status).execute()
+  result =  compute.instances().aggregatedList(project=project,filter ='status eq '+ instance_status).execute()
+  instanceList = []
+  for element in result['items']:
+    if 'warning' not in result['items'][element]:
+      for index in range(len(result['items'][element]['instances'])):
+        instanceList.append(result['items'][element]['instances'][index])
+  return instanceList
+  #return result['items'] if 'items' in result else None
 # [END list_instances]
 
 # Function to retrieve information about instances
-def proccess_instances_info (list_instances,compute,project,zone , instance_status):
-  instancesList = list_instances (compute,project,zone,instance_status)
+def proccess_instances_info (instanceList,compute,project):
+  
   instances_infos = []
   i = 0
-  for instance in instancesList:
+  for instance in instanceList:
+    
+    result = compute.disks().get(project=project, zone=instance['zone'].rsplit('/', 1)[-1], disk=instance['disks'][0]['deviceName']).execute()
     instances_infos.append({
       'name':instance['name'],
       'machine_type':instance['machineType'].rsplit('/', 1)[-1],
       'zone': instance['zone'].rsplit('/', 1)[-1],
-      'image': instance['disks'][0]['licenses'][0].rsplit('/', 1)[-1],
-      'network':instance['networkInterfaces'][0]['network'].rsplit('/', 1)[-1]
+      'image': result['sourceImage'],
+      'network':instance['networkInterfaces'][0]['network'].rsplit('/', 1)[-1],
+      'disk_size':result['sizeGb'],
+      'device_name':instance['disks'][0]['deviceName'],
+      'service_account_email':instance['serviceAccounts'][0]['email'],
+      'scopes':json.dumps(instance['serviceAccounts'][0]['scopes'])
+      
             })
     if ('items' in instance['tags']):
         instances_infos[i].update({'tags': json.dumps(instance['tags']['items'])})
+
+    if ('labels' in instance):
+        instances_infos[i].update({'labels':instance['labels']})
         
     if  ('natIP' in instance['networkInterfaces'][0]['accessConfigs'][0]):
         instances_infos[i].update({'ip':instance['networkInterfaces'][0]['accessConfigs'][0]['natIP']})    
@@ -59,13 +81,13 @@ def render_terraform(instances_infos,filename):
   
 # écriture du tf sur le disssssssssssssssssssssssssssssssssssk
 
-def main(project,zone):
+def main(project):
   compute = authentification()
   
   #try:
-  instances_infos_RUNNING = proccess_instances_info (list_instances,compute,project,zone,instance_status="RUNNING")
+  instances_infos_RUNNING = proccess_instances_info (list_instances(compute,project,instance_status="RUNNING"),compute,project)
 
-  instances_infos_TERMINATED = proccess_instances_info (list_instances,compute,project,zone,instance_status="TERMINATED")
+  instances_infos_TERMINATED = proccess_instances_info (list_instances(compute,project,instance_status="TERMINATED"),compute,project)
   #except TypeError:
     #print("No instance is running on your project")
   render_terraform(instances_infos_RUNNING,filename = "instances_Running.tf" )
@@ -73,4 +95,4 @@ def main(project,zone):
 
 
 if __name__ == '__main__':
-  main(sys.argv[1],sys.argv[2])
+  main(sys.argv[1])
