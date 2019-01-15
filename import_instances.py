@@ -14,12 +14,12 @@ import json
 # step 1 faire une instance simple et la relancer avec terraform 
 # step 2 complexifier l'instance
 
+#4 COMPARER LES INSTANCES sur drouot dev avec thom'as methods
 
-#2labels + service accounts + gérer plusieurs disk
 #metadata_startup_script + metadata
 
 #3atttention plusieurs interfaces pour netwooooooooork !
-#4 COMPARER LES INSTANCES
+
 
 
 def authentification():
@@ -45,8 +45,8 @@ def proccess_instances_info (instanceList,compute,project):
   instances_infos = []
   i = 0
   for instance in instanceList:
-    
-    result = compute.disks().get(project=project, zone=instance['zone'].rsplit('/', 1)[-1], disk=instance['disks'][0]['deviceName']).execute()
+    disk_name = instance['disks'][0]['source'].rsplit('/', 1)[-1]
+    result = compute.disks().get(project=project, zone=instance['zone'].rsplit('/', 1)[-1], disk=disk_name).execute()
     instances_infos.append({
       'name':instance['name'],
       'machine_type':instance['machineType'].rsplit('/', 1)[-1],
@@ -54,19 +54,29 @@ def proccess_instances_info (instanceList,compute,project):
       'image': result['sourceImage'],
       'network':instance['networkInterfaces'][0]['network'].rsplit('/', 1)[-1],
       'disk_size':result['sizeGb'],
-      'device_name':instance['disks'][0]['deviceName'],
-      'service_account_email':instance['serviceAccounts'][0]['email'],
-      'scopes':json.dumps(instance['serviceAccounts'][0]['scopes'])
+      'device_name':disk_name,
+      'auto_delete': instance['disks'][0]['autoDelete']
+      #'service_account_email':instance['serviceAccounts'][0]['email'],
+      #'scopes':json.dumps(instance['serviceAccounts'][0]['scopes'])
       
             })
+
     if ('items' in instance['tags']):
         instances_infos[i].update({'tags': json.dumps(instance['tags']['items'])})
 
     if ('labels' in instance):
         instances_infos[i].update({'labels':instance['labels']})
-        
+
+    if (len(instance['disks']) != 1):
+      attached_disk_list = []
+      for disk in instance['disks'][1:]:
+          attached_disk_list.append({'source' : disk['source'] , 'mode' : disk['mode'] })
+      instances_infos[i].update({'attached_disk':attached_disk_list})
+
     if  ('natIP' in instance['networkInterfaces'][0]['accessConfigs'][0]):
-        instances_infos[i].update({'ip':instance['networkInterfaces'][0]['accessConfigs'][0]['natIP']})    
+        instances_infos[i].update({'ip':instance['networkInterfaces'][0]['accessConfigs'][0]['natIP']})
+    if ('serviceAccounts' in instance):
+      instances_infos[i].update({'service_account_email':instance['serviceAccounts'][0]['email'],'scopes':json.dumps(instance['serviceAccounts'][0]['scopes'])}) 
     i += 1
     
   return instances_infos
@@ -79,7 +89,6 @@ def render_terraform(instances_infos,filename):
   with open(filename, "w") as fh:
     fh.write(terraform_code)
   
-# écriture du tf sur le disssssssssssssssssssssssssssssssssssk
 
 def main(project):
   compute = authentification()

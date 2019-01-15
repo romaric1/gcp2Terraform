@@ -1,5 +1,5 @@
 provider "google" {
-  project = "romaric-gcp-training"
+  project = "drouot-dev"
   region  = "europe-west1"
   version = ""
 }

@@ -1,7 +1,3 @@
-#passer le dictionnaire à la template jinja
-#boucle qui parcourt les instances et qui remplie les variables
-#gérer les tags !!!
-#virer le running itérer sur toutes les instances
 
 {% for index in range(instances_infos|length) %}
  
@@ -14,12 +10,23 @@ resource "google_compute_instance" "{{instances_infos[index]['name']}}" {
   tags = {{instances_infos[index]['tags']}}
 {% endif %}
   boot_disk {
-    device_name = "{{instances_infos[index]['device_name']}}"
+    #device_name = "{{instances_infos[index]['device_name']}}"
+    auto_delete = "{{instances_infos[index]['auto_delete']}}"
     initialize_params {
       image = "{{ instances_infos[index]['image']}}"
       size = "{{instances_infos[index]['disk_size']}}"
     }
   }
+
+{% if 'attached_disk' in instances_infos[index] %}
+  {% for attached_disk in instances_infos[index]['attached_disk'] %}
+  attached_disk {
+    source = "{{attached_disk['source']}}"
+    mode = "{{attached_disk['mode']}}"
+  }
+  {% endfor %}
+{% endif %}
+
 {% if 'labels' in instances_infos[index] %}
 labels {
 {% for key in instances_infos[index]['labels']  %}
@@ -34,9 +41,14 @@ labels {
     }
   }
 
+# faire un if de service_account car instance sans services account
+{% if 'service_account_email' in instances_infos[index] %}
 service_account {
+  
   email = "{{ instances_infos[index]['service_account_email'] }}"
   scopes = {{ instances_infos[index]['scopes'] }}
+  
 }
+{% endif %}
 }
 {% endfor %}
