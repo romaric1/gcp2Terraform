@@ -56,8 +56,7 @@ def proccess_instances_info (instanceList,compute,project):
       'disk_size':result['sizeGb'],
       'device_name':disk_name,
       'auto_delete': instance['disks'][0]['autoDelete']
-      #'service_account_email':instance['serviceAccounts'][0]['email'],
-      #'scopes':json.dumps(instance['serviceAccounts'][0]['scopes'])
+
       
             })
 
