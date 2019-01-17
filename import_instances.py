@@ -1,24 +1,8 @@
-# coding:utf-8
+""" """
 import googleapiclient.discovery
 import sys
 from jinja2 import Template
 import json
-# gérer l'authentification
-# récupérer la liste des instances ( récupérer toutes les infos pour faire la template tf)
-# récupérer les boot disk
-# récupérer les autres disk
-# exectuter les templates terraform ( render + print )
-# lancer le script python et écrire la sortie dans un fichier main.tf
-# lancer terraform
-
-# step 1 faire une instance simple et la relancer avec terraform 
-# step 2 complexifier l'instance
-
-#4 COMPARER LES INSTANCES sur drouot dev avec thom'as methods
-
-#metadata_startup_script + metadata
-
-#3atttention plusieurs interfaces pour netwooooooooork !
 
 
 
@@ -26,9 +10,8 @@ def authentification():
   return googleapiclient.discovery.build('compute', 'v1')
 
 # [START list_instances]
-#def list_instances(compute, project, zone , instance_status):
+
 def list_instances(compute, project,instance_status):
-  #result = compute.instances().list(project=project, zone=zone , filter ='status eq '+ instance_status).execute()
   result =  compute.instances().aggregatedList(project=project,filter ='status eq '+ instance_status).execute()
   instanceList = []
   for element in result['items']:
@@ -36,17 +19,42 @@ def list_instances(compute, project,instance_status):
       for index in range(len(result['items'][element]['instances'])):
         instanceList.append(result['items'][element]['instances'][index])
   return instanceList
-  #return result['items'] if 'items' in result else None
 # [END list_instances]
 
+
+def retrieve_instance_tags(instance,instances_infos,index):
+  if ('items' in instance['tags']):
+        instances_infos[index].update({'tags': json.dumps(instance['tags']['items'])})
+
+def retrieve_instance_labels(instance,instances_infos,index):
+  if ('labels' in instance):
+        instances_infos[index].update({'labels':instance['labels']})
+
+def retrieve_disk(instance,instances_infos,index):
+  if (len(instance['disks']) != 1):
+      attached_disk_list = []
+      for disk in instance['disks'][1:]:
+          attached_disk_list.append({'source' : disk['source'] , 'mode' : disk['mode'] })
+      instances_infos[index].update({'attached_disk':attached_disk_list})
+
+def retrieve_network_interfaces(instance,instances_infos,index):
+  if  ('natIP' in instance['networkInterfaces'][0]['accessConfigs'][0]):
+        instances_infos[index].update({'ip':instance['networkInterfaces'][0]['accessConfigs'][0]['natIP']})
+
+def retrieve_service_account(instance,instances_infos,index):
+    if ('serviceAccounts' in instance):
+      instances_infos[index].update({'service_account_email':instance['serviceAccounts'][0]['email'],'scopes':json.dumps(instance['serviceAccounts'][0]['scopes'])}) 
+  
 # Function to retrieve information about instances
 def proccess_instances_info (instanceList,compute,project):
-  
   instances_infos = []
-  i = 0
+  
   for instance in instanceList:
+    index = instanceList.index(instance)
+
     disk_name = instance['disks'][0]['source'].rsplit('/', 1)[-1]
     result = compute.disks().get(project=project, zone=instance['zone'].rsplit('/', 1)[-1], disk=disk_name).execute()
+    
     instances_infos.append({
       'name':instance['name'],
       'machine_type':instance['machineType'].rsplit('/', 1)[-1],
@@ -56,31 +64,16 @@ def proccess_instances_info (instanceList,compute,project):
       'disk_size':result['sizeGb'],
       'device_name':disk_name,
       'auto_delete': instance['disks'][0]['autoDelete']
-
-      
             })
 
-    if ('items' in instance['tags']):
-        instances_infos[i].update({'tags': json.dumps(instance['tags']['items'])})
+    retrieve_instance_tags(instance,instances_infos,index)
+    retrieve_instance_labels(instance,instances_infos,index)
+    retrieve_disk(instance,instances_infos,index)
+    retrieve_network_interfaces(instance,instances_infos,index)
+    retrieve_service_account(instance,instances_infos,index)
 
-    if ('labels' in instance):
-        instances_infos[i].update({'labels':instance['labels']})
-
-    if (len(instance['disks']) != 1):
-      attached_disk_list = []
-      for disk in instance['disks'][1:]:
-          attached_disk_list.append({'source' : disk['source'] , 'mode' : disk['mode'] })
-      instances_infos[i].update({'attached_disk':attached_disk_list})
-
-    if  ('natIP' in instance['networkInterfaces'][0]['accessConfigs'][0]):
-        instances_infos[i].update({'ip':instance['networkInterfaces'][0]['accessConfigs'][0]['natIP']})
-    if ('serviceAccounts' in instance):
-      instances_infos[i].update({'service_account_email':instance['serviceAccounts'][0]['email'],'scopes':json.dumps(instance['serviceAccounts'][0]['scopes'])}) 
-    i += 1
-    
   return instances_infos
 
-  #rajouter au fur et à mesure ce qui existe
 def render_terraform(instances_infos,filename):
   with open('instances.tf.j2') as file_:
     template = Template(file_.read())

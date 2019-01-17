@@ -10,7 +10,6 @@ resource "google_compute_instance" "{{instances_infos[index]['name']}}" {
   tags = {{instances_infos[index]['tags']}}
 {% endif %}
   boot_disk {
-    #device_name = "{{instances_infos[index]['device_name']}}"
     auto_delete = "{{instances_infos[index]['auto_delete']}}"
     initialize_params {
       image = "{{ instances_infos[index]['image']}}"
@@ -41,7 +40,6 @@ labels {
     }
   }
 
-# faire un if de service_account car instance sans services account
 {% if 'service_account_email' in instances_infos[index] %}
 service_account {
   
