@@ -5,4 +5,4 @@ jobs:
       - image: circleci/python:3.6.7
     steps:
       - checkout
-      - run: pip install -r requirements/dev.txt
+      - run: pip install -r requirements.txt
