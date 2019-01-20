@@ -4,7 +4,8 @@ import sys
 from jinja2 import Template
 import json
 
-
+#TODO commenter le code
+#TODO améliorer le repo
 
 def authentification():
   return googleapiclient.discovery.build('compute', 'v1')
