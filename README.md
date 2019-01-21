@@ -17,7 +17,6 @@ Tested with python 3.6.7
 Check your python version with :
 ```
 python3 --version
-
 ```
 
 ### Installing
