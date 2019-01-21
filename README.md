@@ -38,12 +38,62 @@ to complete
 ### Example
 
 ```
-python ./import_instances.py romaric-gcp-training
+python ./src/import_instances.py romaric-gcp-training
 ```
 ```
-python ./import_instances.py google-cloud-platform-project-id
+python ./src/import_instances.py google-cloud-platform-project-id
 ```
+### Output
+```hcl
+resource "google_compute_instance" "instance-1" {
+  name         = "instance-1"
+  machine_type = "n1-standard-2"
+  zone         = "europe-west1-b"
 
+
+  tags = ["http-server", "https-server", "web-server"]
+
+  boot_disk {
+    auto_delete = "True"
+    initialize_params {
+      image = "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/debian-9-stretch-v20190116"
+      size = "10"
+    }
+  }
+
+
+  
+  attached_disk {
+    source = "https://www.googleapis.com/compute/v1/projects/romaric-gcp-training/zones/europe-west1-b/disks/disk-2"
+    mode = "READ_WRITE"
+  }
+  
+
+
+
+labels {
+
+   env = "staging"
+}
+
+  network_interface {
+    network = "default"
+
+    access_config {
+      nat_ip = "35.233.58.78"
+    }
+  }
+
+
+service_account {
+  
+  email = "661701253715-compute@developer.gserviceaccount.com"
+  scopes = ["https://www.googleapis.com/auth/devstorage.read_only", "https://www.googleapis.com/auth/logging.write", "https://www.googleapis.com/auth/monitoring.write", "https://www.googleapis.com/auth/servicecontrol", "https://www.googleapis.com/auth/service.management.readonly", "https://www.googleapis.com/auth/trace.append"]
+  
+}
+
+}
+```
 
 ## Running the tests
 
