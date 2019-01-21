@@ -1,4 +1,5 @@
-
+# this template use informations from the import_instances.py files 
+# and generate a terraform files of compute instance ressources
 {% for index in range(instances_infos|length) %}
  
 resource "google_compute_instance" "{{instances_infos[index]['name']}}" {
