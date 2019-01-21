@@ -13,24 +13,27 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
-
+Tested with python 3.6.7
+Check your python version with :
 ```
-Give examples
+python3 --version
+
 ```
 
 ### Installing
 
+from source
+
+```
+git clone --recursive https://github.com/romaric1/gcp2Terraform.git
+cd gcp2Terraform
+pip install -r requirements.txt
+```
+
+from pypi
+
+```
 to complete
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
 ```
 
 End with an example of getting some data out of the system or using it for a little demo
