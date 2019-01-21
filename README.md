@@ -35,6 +35,16 @@ from pypi
 ```
 to complete
 ```
+### Example
+
+```
+python ./import_instances.py romaric-gcp-training
+```
+```
+python ./import_instances.py google-cloud-platform-project-id
+```
+
+
 
 End with an example of getting some data out of the system or using it for a little demo
 
