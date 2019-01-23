@@ -5,7 +5,7 @@
 ![python-version](https://img.shields.io/badge/python%20version-3.6.7-green.svg)
 ![licence MIT](https://img.shields.io/badge/licence-MIT-lightgrey.svg)
 
-The goal of this project is to request informations from severals google cloud compute api and generate terraform code 
+Export existing Google Cloud Platform resources to  HashiCorp Configuration Language (HCL , Terraform)
 
 ## Getting Started
 
